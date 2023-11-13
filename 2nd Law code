@@ -1,0 +1,116 @@
+
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+G = 6.67384*(10**(-11))
+M_s = 1.9891*(10**30)
+met_x_Au = 1.496*(10**11)
+
+
+def period_2_a(p_yr):
+    p_sec = p_yr*365.25*24*3600
+    a_m = (((p_sec**2)*G*M_s)/(4*(np.pi**2)))**(1/3)
+    a_Au = a_m/met_x_Au
+    return a_Au
+
+def make_kepler_orbit(e,p_yr):
+    nStep = 500
+    tRange = np.linspace(0,p_yr,nStep)
+
+    theta = []
+    for time in tRange:
+        nHalfPorb = int(2*(time-1)/p_yr)
+        PsiDiff = 1
+        M = 2*np.pi*time/p_yr
+        PsiOld = M
+        theta0old = 180.0
+        while PsiDiff > 1e-10:
+        #print PsiDiff, PsiOld, e*math.sin(PsiOld)
+            PsiNew = M + e*np.sin(PsiOld)
+            PsiDiff = PsiNew-PsiOld
+            PsiOld = PsiNew
+        theta0 = 2*np.arctan(((1+e)/(1-e))**(0.5)*np.tan(PsiOld/2.))
+        theta.append(theta0)
+    return theta
+
+def orbit(sep,e,true_anomaly):
+    rorbit = sep*(1 - e**2)/(1 + e*np.cos(true_anomaly))
+    xorbit = rorbit*np.cos(true_anomaly)
+    yorbit = rorbit*np.sin(true_anomaly)
+    return xorbit,yorbit
+
+def r_p(e):
+     rorbit = 1*(1 - e**2)/(1 + e*np.cos(0))
+     return rorbit
+
+def F(a,b,t,T):
+    M = (2*np.pi*t)/T
+    f = 0.5*a*b*M
+    return f
+###############################################################################
+def shade_area(t1,t2,p_yr,e):
+    tRange = [t1,t2]
+
+    theta = []
+    for time in tRange:
+        PsiDiff = 1
+        M = 2*np.pi*time/p_yr
+        PsiOld = M
+        theta0old = 180.0
+        while PsiDiff > 1e-10:
+        #print PsiDiff, PsiOld, e*math.sin(PsiOld)
+            PsiNew = M + e*np.sin(PsiOld)
+            PsiDiff = PsiNew-PsiOld
+            PsiOld = PsiNew
+        theta0 = 2*np.arctan(((1+e)/(1-e))**(0.5)*np.tan(PsiOld/2.))
+        theta.append(theta0)
+    return theta
+
+def shade_coordinate(e,true_anomaly):
+    x_coo =[]
+    y_coo = []
+    for i in range(len(true_anomaly)):
+        rorbit = 1*(1 - e**2)/(1 + e*np.cos(true_anomaly[i]))
+        xorbit = rorbit*np.cos(true_anomaly[i])
+        x_coo.append(xorbit)
+        yorbit = rorbit*np.sin(true_anomaly[i])
+        y_coo.append(yorbit)
+    return x_coo, y_coo
+
+#####################################################################
+x =input('Enter the period of the planet in years')
+ec = input("Enter the eccentricity of the planet orbit")
+t1 = input('Enter the initial time of the first movement')
+t2 = input('Enter the final time of the first movement ')
+t3 = input('Enter the initial time of the second movement')
+t4 = input('Enter the final time of the second movement')
+a = period_2_a(float(x))
+true_an = make_kepler_orbit(float(ec), float(x))
+xorbit, yorbit = orbit(a, float(ec), true_an)
+
+true_an1 = shade_area(float(t1),float(t2),float(x),float(ec))
+vec1x, vec1y = shade_coordinate(float(ec), true_an1)
+
+true_an2 = shade_area(float(t3),float(t4), float(x), float(ec))
+vec2x, vec2y = shade_coordinate( float(ec), true_an2)
+
+rp = r_p(float(ec))
+A = rp/(1-float(ec))
+B = np.sqrt((A**2)*(1-(float(ec))**2))
+s1 = F(A, B, float(t1), float(x)) - F(A, B, float(t2), float(x))
+s2 = F(A, B, float(t3),float(x))-F(A, B, float(t4),float(x))
+print(s1)
+print(s2)
+# The Sun is located at the origin.
+fig = plt.figure()
+ax  = fig.add_subplot(111)
+ax.plot(xorbit, yorbit, c='b',linewidth=1.0)
+
+plt.quiver([0, 0, 0,0], [0, 0, 0, 0], [vec1x[0], vec1x[1], vec2x[0], vec2x[1]], [vec1y[0], vec1y[1], vec2y[0],vec2y[1] ], angles='xy', scale_units='xy',color=['r','r','g','g'] ,scale=1)
+
+plt.show()
+###########################
+
+
+
