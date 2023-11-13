@@ -1,0 +1,57 @@
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+G = 6.67384*(10**(-11))
+M_s = 1.9891*(10**30)
+met_x_Au = 1.496*(10**11)
+
+
+def period_2_a(p_yr):
+    p_sec = p_yr*365.25*24*3600
+    a_m = (((p_sec**2)*G*M_s)/(4*(np.pi**2)))**(1/3)
+    a_Au = a_m/met_x_Au
+    return a_Au
+
+def make_kepler_orbit(e,p_yr):
+    nStep = 500
+    tRange = np.linspace(0,p_yr,nStep)
+
+    theta = []
+    for time in tRange:
+        nHalfPorb = int(2*(time-1)/p_yr)
+        PsiDiff = 1
+        M = 2*np.pi*time/p_yr
+        PsiOld = M
+        theta0old = 180.0
+        while PsiDiff > 1e-10:
+        #print PsiDiff, PsiOld, e*math.sin(PsiOld)
+            PsiNew = M + e*np.sin(PsiOld)
+            PsiDiff = PsiNew-PsiOld
+            PsiOld = PsiNew
+        theta0 = 2*np.arctan(((1+e)/(1-e))**(0.5)*np.tan(PsiOld/2.))
+        theta.append(theta0)
+    return theta
+
+def orbit(sep,e,true_anomaly):
+    rorbit = sep*(1 - e**2)/(1 + e*np.cos(true_anomaly))
+    xorbit = rorbit*np.cos(true_anomaly)
+    yorbit = rorbit*np.sin(true_anomaly)
+
+
+    return xorbit,yorbit
+#####################################################################
+x =input('Enter the period of the planet in years')
+ec = input("Enter the eccentricity of the planet orbit")
+
+a = period_2_a(float(x))
+true_an = make_kepler_orbit(float(ec), float(x))
+xorbit, yorbit = orbit(a, float(ec), true_an)
+plt.title('Planet Orbit')
+# The Sun is located at the origin.
+plt.scatter(0,0, color='orange')
+plt.scatter(xorbit,yorbit, color = 'blue', linewidths=0.1)
+plt.axis('auto')
+plt.xlabel('x position [au]')
+plt.ylabel('y position [au]')
+plt.show()
